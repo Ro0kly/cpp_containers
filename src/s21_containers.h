@@ -23,7 +23,7 @@ private:
   pointer data_ = nullptr;
 
 public:
-  Vector() = default;
+  Vector() noexcept = default;
   Vector(size_type size) {
     if (size > 0) {
       allocate(size);
@@ -35,7 +35,7 @@ public:
           "Constructor: Invalid size. Size can't be less than zero.");
     }
   }
-  ~Vector() {
+  ~Vector() noexcept {
     clear();
     capacity_ = 0;
     ::operator delete(data_);
@@ -59,7 +59,7 @@ public:
     capacity_ = size_;
   }
 
-  Vector(Vector &&other)
+  Vector(Vector &&other) noexcept
       : size_(other.size_), capacity_(other.size_), data_(other.data_) {
     other.data_ = nullptr;
     other.size_ = 0;
@@ -153,20 +153,11 @@ public:
     return data_[index];
   }
 
-  pointer data() const { return data_; }
-  size_type size() const { return size_; }
-  size_type capacity() const { return capacity_; }
-  const_reference front() const { return data_[0]; }
-  const_reference back() const { return data_[size_ - 1]; }
-  iterator begin() const { return data_; }
-  iterator end() const { return data_ + size_; }
-  bool empty() const { return begin() == end(); }
-
   iterator insert(iterator pos, const_reference value) {
     size_type new_pos = pos - begin();
     if (new_pos > size_) {
-      throw std::runtime_error("Insert. Invalid position: position to insert "
-                               "is bigger than container size.");
+      throw std::runtime_error(
+          "Insert. Invalid position: position to insert, out of bounds.");
     }
     if (size_ == capacity_) {
       size_type new_size = size_ + 1;
@@ -177,7 +168,7 @@ public:
       for (size_type i = 0; i < new_pos; ++i) {
         new (&new_data[i]) value_type(std::move_if_noexcept(data_[i]));
       }
-      new (&new_data[new_pos]) T(value);
+      new (&new_data[new_pos]) T(std::move_if_noexcept(value));
       for (size_type i = new_pos + 1; i < new_size; ++i) {
         new (&new_data[i]) value_type(std::move_if_noexcept(data_[i - 1]));
       }
@@ -191,10 +182,43 @@ public:
       for (size_type i = size_ - 1; i > new_pos; --i) {
         data_[i] = data_[i - 1];
       }
-      data_[new_pos] = value;
+      data_[new_pos] = std::move_if_noexcept(value);
       ++size_;
     }
-
-    return pos;
+    return begin() + new_pos;
   }
+
+  void erase(iterator pos) {
+    if (size_ == 0) {
+      throw std::runtime_error(
+          "Erase. The size is zero, you can't remove anything.");
+    }
+    size_type remove_pos = pos - begin();
+    if (remove_pos > size_) {
+      throw std::runtime_error(
+          "Erase. Invalid position: position to erase, out of bounds.");
+    }
+    data_[remove_pos].~value_type();
+    for (size_type i = remove_pos; i < size_ - 1; ++i) {
+      data_[i] = data_[i + 1];
+    }
+    --size_;
+  }
+
+  void push_back(const_reference value) { insert(end(), value); }
+  void pop_back() { erase(end()); }
+  void swap(Vector &other) noexcept {
+    std::swap(size_, other.size_);
+    std::swap(capacity_, other.capacity_);
+    std::swap(data_, other.data_);
+  }
+
+  pointer data() const noexcept { return data_; }
+  size_type size() const noexcept { return size_; }
+  size_type capacity() const noexcept { return capacity_; }
+  const_reference front() const { return data_[0]; }
+  const_reference back() const { return data_[size_ - 1]; }
+  iterator begin() const { return data_; }
+  iterator end() const { return data_ + size_; }
+  bool empty() const { return begin() == end(); }
 };

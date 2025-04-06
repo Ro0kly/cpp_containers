@@ -27,10 +27,9 @@ public:
 
 int main() {
   Vector<int> v = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-  v.insert(v.begin(), 10);
-  // std::cout << "cap " << v.capacity() << " size " << v.size() << std::endl;
-  // for (size_t i = 0; i < v.size(); ++i) {
-  //   std::cout << v[i] << " ";
-  // }
+  v.erase(v.begin());
+  for (size_t i = 0; i < v.size(); ++i) {
+    std::cout << v[i] << " ";
+  }
   return 0;
 }
