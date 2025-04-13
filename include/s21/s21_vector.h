@@ -5,9 +5,13 @@
 #include <new>
 #include <ostream>
 #include <stdexcept>
-#include <type_traits>
 #include <utility>
-template <typename T> class Vector {
+
+#ifndef VECTOR_H
+#define VECTOR_H
+
+namespace s21 {
+template <typename T> class vector {
 public:
   using value_type = T;
   using reference = T &;
@@ -23,8 +27,8 @@ private:
   pointer data_ = nullptr;
 
 public:
-  Vector() noexcept = default;
-  Vector(size_type size) {
+  vector() noexcept = default;
+  vector(size_type size) {
     if (size > 0) {
       allocate(size);
       for (size_type i = 0; i < size_; ++i) {
@@ -35,13 +39,13 @@ public:
           "Constructor: Invalid size. Size can't be less than zero.");
     }
   }
-  ~Vector() noexcept {
+  ~vector() noexcept {
     clear();
     capacity_ = 0;
     ::operator delete(data_);
   }
 
-  Vector(const Vector<value_type> &other) {
+  vector(const vector<value_type> &other) {
     if (other.size_ > 0) {
       allocate(other.size_);
       for (size_type i = 0; i < size_; ++i) {
@@ -50,7 +54,7 @@ public:
     }
   }
 
-  Vector(std::initializer_list<value_type> list) : size_(0), capacity_(0) {
+  vector(std::initializer_list<value_type> list) : size_(0), capacity_(0) {
     data_ =
         static_cast<pointer>(::operator new(list.size() * sizeof(value_type)));
     for (const auto &item : list) {
@@ -59,14 +63,14 @@ public:
     capacity_ = size_;
   }
 
-  Vector(Vector &&other) noexcept
+  vector(vector &&other) noexcept
       : size_(other.size_), capacity_(other.size_), data_(other.data_) {
     other.data_ = nullptr;
     other.size_ = 0;
     other.capacity_ = 0;
   }
 
-  reference operator=(const Vector &other) {
+  vector &operator=(const vector &other) {
     if (this == &other) {
       return *this;
     }
@@ -80,7 +84,7 @@ public:
     return *this;
   }
 
-  Vector &operator=(Vector &&other) {
+  vector &operator=(vector &&other) {
     if (this == &other) {
       return *this;
     }
@@ -139,7 +143,7 @@ public:
 
   reference operator[](size_type index) const {
     if (index >= size_) {
-      throw std::runtime_error(
+      throw std::out_of_range(
           "Operator []: Invalid index. Index out of range.");
     }
     return data_[index];
@@ -147,7 +151,7 @@ public:
 
   reference at(size_type index) const {
     if (index >= size_) {
-      throw std::runtime_error(
+      throw std::out_of_range(
           "Operator \"at\": Invalid index. Index out of range.");
     }
     return data_[index];
@@ -156,12 +160,12 @@ public:
   iterator insert(iterator pos, const_reference value) {
     size_type new_pos = pos - begin();
     if (new_pos > size_) {
-      throw std::runtime_error(
-          "Insert. Invalid position: position to insert, out of bounds.");
+      throw std::out_of_range(
+          "Insert. Invalid position: position to insert, out of range.");
     }
     if (size_ == capacity_) {
       size_type new_size = size_ + 1;
-      size_type new_capacity = capacity_ * 2;
+      size_type new_capacity = capacity_ == 0 ? 1 : capacity_ * 2;
       pointer new_data = static_cast<pointer>(
           ::operator new(new_capacity * sizeof(value_type)));
 
@@ -176,6 +180,7 @@ public:
       ::operator delete(data_);
       data_ = new_data;
       size_ = new_size;
+      /*std::cout << "SIZE 1: " << size_ << " VALUE: " << value << std::endl;*/
       capacity_ = new_capacity;
     } else if (size_ < capacity_) {
       new (&data_[size_]) T(std::move_if_noexcept(data_[size_ - 1]));
@@ -184,6 +189,7 @@ public:
       }
       data_[new_pos] = std::move_if_noexcept(value);
       ++size_;
+      /*std::cout << "SIZE 2: " << size_ << " VALUE: " << value << std::endl;*/
     }
     return begin() + new_pos;
   }
@@ -207,7 +213,7 @@ public:
 
   void push_back(const_reference value) { insert(end(), value); }
   void pop_back() { erase(end()); }
-  void swap(Vector &other) noexcept {
+  void swap(vector &other) noexcept {
     std::swap(size_, other.size_);
     std::swap(capacity_, other.capacity_);
     std::swap(data_, other.data_);
@@ -216,9 +222,26 @@ public:
   pointer data() const noexcept { return data_; }
   size_type size() const noexcept { return size_; }
   size_type capacity() const noexcept { return capacity_; }
-  const_reference front() const { return data_[0]; }
-  const_reference back() const { return data_[size_ - 1]; }
+  const_reference front() const {
+    if (size_ == 0) {
+      throw std::out_of_range(
+          "Front. The size is zero, you can't get anything.");
+    }
+    return data_[0];
+  }
+  const_reference back() const {
+    if (size_ == 0) {
+      throw std::out_of_range(
+          "Back. The size is zero, you can't get anything.");
+    }
+
+    return data_[size_ - 1];
+  }
   iterator begin() const { return data_; }
   iterator end() const { return data_ + size_; }
   bool empty() const { return begin() == end(); }
 };
+
+} // namespace s21
+
+#endif
