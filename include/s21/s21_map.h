@@ -1,5 +1,7 @@
+#include <__iterator/reverse_iterator.h>
 #include <functional>
 #include <initializer_list>
+#include <iostream>
 #include <memory>
 #include <utility>
 
@@ -26,10 +28,10 @@ private:
   };
 
   template <typename K, typename H> class iterator {
-    using Node = typename map<K, H>::Node; // Forward declare map's Node
-    Node *current;
+    using Node = typename map<K, H>::Node;
 
   public:
+    Node *current;
     using value_type = std::pair<const K, H>;
     using reference = value_type &;
     using pointer = value_type *;
@@ -210,11 +212,137 @@ public:
     count++;
     return {iterator<Key, T>(new_node), true};
   }
+
+  std::pair<iterator<Key, T>, bool> insert(const Key &key, const T &obj) {
+    return insert(value_type(key, obj));
+  }
+
+  std::pair<iterator<Key, T>, bool> insert_or_assign(const Key &key,
+                                                     const T &obj) {
+    auto result = insert(value_type(key, obj));
+
+    if (!result.second) {
+      result.first->second = obj;
+    }
+
+    return result;
+  }
+
+  void swap(map &other) noexcept {
+    using std::swap;
+
+    swap(root, other.root);
+    swap(count, other.count);
+    swap(comp, other.comp);
+
+    if (alloc_traits::propagate_on_container_swap::value) {
+      swap(alloc, other.alloc);
+    }
+  }
+  void transplant(Node *u, Node *v) {
+    if (!u->parent) {
+      root = v;
+    } else if (u == u->parent->left) {
+      u->parent->left = v;
+    } else {
+      u->parent->right = v;
+    }
+    if (v)
+      v->parent = u->parent;
+  }
+
+  void merge(map &other) {
+    if (this == &other)
+      return;
+    iterator it = other.begin();
+    while (it != other.end()) {
+      auto next = it;
+      ++next;
+
+      auto [pos, inserted] = insert(std::move(it.current->data));
+
+      if (inserted) {
+        Node *node = it.current;
+        other.transplant(node, nullptr);
+        other.destroy_node(node);
+        other.count--;
+      }
+
+      it = next;
+    }
+  }
+
+  bool contains(const Key &key) const noexcept {
+    Node *current = root;
+    while (current) {
+      if (comp(key, current->data.first)) {
+        current = current->left;
+      } else if (comp(current->data.first, key)) {
+        current = current->right;
+      } else {
+        return true;
+      }
+    }
+    return false;
+  }
+
   size_type size() const noexcept { return count; }
   bool empty() const noexcept { return count == 0; }
   void clear() noexcept {
     clear_recursive(root);
     root = nullptr;
     count = 0;
+  }
+  iterator<Key, T> begin() {
+    Node *leftmost = root;
+    while (leftmost && leftmost->left)
+      leftmost = leftmost->left;
+    return iterator<Key, T>(leftmost);
+  }
+
+  iterator<Key, T> end() { return iterator<Key, T>(nullptr); }
+
+  T &operator[](const Key &key) {
+    Node *node = find_node(key);
+    if (!node) {
+      throw std::out_of_range("Key not found in map");
+    }
+    return node->data.second;
+  }
+
+  T &at(const Key &key) {
+    Node *node = find_node(key);
+    if (!node) {
+      throw std::out_of_range("Key not found in map");
+    }
+    return node->data.second;
+  }
+
+  void print() const {
+    std::cout << "Map contents (in-order):\n";
+    print_in_order(root);
+    std::cout << "\n";
+  }
+
+private:
+  Node *find_node(const Key &key) const {
+    Node *current = root;
+    while (current) {
+      if (comp(key, current->data.first)) {
+        current = current->left;
+      } else if (comp(current->data.first, key)) {
+        current = current->right;
+      } else {
+        return current;
+      }
+    }
+    return nullptr;
+  }
+  void print_in_order(Node *node) const {
+    if (!node)
+      return;
+    print_in_order(node->left);
+    std::cout << "[" << node->data.first << "] = " << node->data.second << "\n";
+    print_in_order(node->right);
   }
 };
