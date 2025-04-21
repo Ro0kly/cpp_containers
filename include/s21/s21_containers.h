@@ -4,5 +4,6 @@
 #include "s21_map.h"
 #include "s21_queue.h"
 #include "s21_vector.h"
+#include <stdexcept>
 
 #endif

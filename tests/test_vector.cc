@@ -1,6 +1,6 @@
 #include "../include/s21/s21_containers.h"
-#include <stdexcept>
 #include <gtest/gtest.h>
+
 class VectorTest : public testing::Test {
 protected:
   s21::vector<int> int_vec;
@@ -32,26 +32,21 @@ TEST_F(VectorTest, PushBack) {
 }
 
 TEST_F(VectorTest, ElementAccess) {
-  // Operator[]
   EXPECT_EQ(int_vec[0], 1);
   EXPECT_EQ(str_vec[1], "world");
 
-  // at() with bounds checking
   EXPECT_EQ(int_vec.at(2), 3);
   EXPECT_THROW(int_vec.at(3), std::out_of_range);
 
-  // front()/back()
   EXPECT_EQ(int_vec.front(), 1);
   EXPECT_EQ(int_vec.back(), 3);
 }
 
 TEST_F(VectorTest, InsertErase) {
-  // Insert in middle
   int_vec.insert(int_vec.begin() + 1, 10);
   EXPECT_EQ(int_vec.size(), 4);
   EXPECT_EQ(int_vec[1], 10);
 
-  // Erase first element
   int_vec.erase(int_vec.begin());
   EXPECT_EQ(int_vec.size(), 3);
   EXPECT_EQ(int_vec[0], 10);
@@ -111,8 +106,6 @@ TEST(VectorEdgeCases, EmptyVector) {
   EXPECT_EQ(v.size(), 0);
   EXPECT_EQ(v.capacity(), 0);
 
-  // Test front/back access on empty vector (should throw or have defined
-  // behavior)
   EXPECT_THROW(v.front(), std::out_of_range);
   EXPECT_THROW(v.back(), std::out_of_range);
 }
@@ -124,8 +117,6 @@ TEST(VectorEdgeCases, ClearVector) {
   v.clear();
   EXPECT_TRUE(v.empty());
   EXPECT_EQ(v.size(), 0);
-  // Capacity might or might not change after clear - depends on your
-  // implementation
 }
 
 TEST(VectorEdgeCases, ReserveAndShrink) {
@@ -143,49 +134,40 @@ TEST(VectorEdgeCases, ReserveAndShrink) {
 TEST(VectorEdgeCases, CopyAndMove) {
   s21::vector<int> original = {1, 2, 3, 4, 5};
 
-  // Copy constructor
   s21::vector<int> copy(original);
   EXPECT_EQ(copy.size(), original.size());
   EXPECT_EQ(copy[0], original[0]);
 
-  // Move constructor
   s21::vector<int> moved(std::move(original));
   EXPECT_EQ(moved.size(), copy.size());
-  EXPECT_TRUE(original.empty()); // NOLINT after move
+  EXPECT_TRUE(original.empty());
 
-  // Copy assignment
   s21::vector<int> assigned;
   assigned = copy;
   EXPECT_EQ(assigned.size(), copy.size());
 
-  // Move assignment
   assigned = std::move(copy);
   EXPECT_EQ(assigned.size(), moved.size());
-  EXPECT_TRUE(copy.empty()); // NOLINT after move
+  EXPECT_TRUE(copy.empty()); 
 }
 
 TEST(VectorEdgeCases, AllocationFailure) {
   s21::vector<int> v;
 
-  // Try to allocate more than possible (implementation dependent)
   EXPECT_THROW(v.reserve(std::numeric_limits<size_t>::max()), std::bad_alloc);
 
-  // Check vector is still valid after exception
   EXPECT_TRUE(v.empty());
   v.push_back(1);
   EXPECT_EQ(v.size(), 1);
 }
 
 TEST(VectorEdgeCases, DifferentDataTypes) {
-  // Test with double
   s21::vector<double> vd = {1.1, 2.2, 3.3};
   EXPECT_DOUBLE_EQ(vd[1], 2.2);
 
-  // Test with string
   s21::vector<std::string> vs = {"hello", "world"};
   EXPECT_EQ(vs[0], "hello");
 
-  // Test with custom struct
   struct Point {
     int x, y;
   };
@@ -207,12 +189,12 @@ TEST(VectorEdgeCases, IteratorValidity) {
 TEST(VectorErase, SingleElement) {
   s21::vector<int> v = {1, 2, 3, 4, 5};
 
-  v.erase(v.begin() + 2); // Erase element at index 2 (value 3)
+  v.erase(v.begin() + 2); 
 
   EXPECT_EQ(v.size(), 4);
   EXPECT_EQ(v[0], 1);
   EXPECT_EQ(v[1], 2);
-  EXPECT_EQ(v[2], 4); // Element shifted after erase
+  EXPECT_EQ(v[2], 4); 
   EXPECT_EQ(v[3], 5);
 }
 
@@ -234,7 +216,7 @@ TEST(VectorErase, CustomObjects) {
 
   s21::vector<Person> v = {{"Alice", 30}, {"Bob", 25}, {"Charlie", 35}};
 
-  v.erase(v.begin() + 1); // Erase Bob
+  v.erase(v.begin() + 1); 
 
   EXPECT_EQ(v.size(), 2);
   EXPECT_EQ(v[0].name, "Alice");
@@ -245,13 +227,13 @@ TEST(VectorErase, CustomObjects) {
 
 TEST(VectorErase, StressTest) {
   s21::vector<int> v;
-  const int N = 1000; // Reduced from 10000 for faster tests
+  const int N = 1000; 
 
-  // Fill vector
+ 
   for (int i = 0; i < N; ++i)
     v.push_back(i);
 
-  // Erase all even numbers
+  
   for (size_t i = 0; i < v.size();) {
     if (v[i] % 2 == 0)
       v.erase(v.begin() + i);
@@ -259,10 +241,10 @@ TEST(VectorErase, StressTest) {
       ++i;
   }
 
-  // Verify
+  
   EXPECT_EQ(v.size(), N / 2);
   for (size_t i = 0; i < v.size(); ++i) {
-    EXPECT_EQ(v[i] % 2, 1); // All remaining elements should be odd
+    EXPECT_EQ(v[i] % 2, 1); 
   }
 }
 

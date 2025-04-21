@@ -1,11 +1,4 @@
-#include <algorithm>
-#include <cstddef>
-#include <initializer_list>
 #include <iostream>
-#include <new>
-#include <ostream>
-#include <stdexcept>
-#include <utility>
 
 #ifndef VECTOR_H
 #define VECTOR_H
@@ -242,6 +235,6 @@ public:
   bool empty() const { return begin() == end(); }
 };
 
-} // namespace s21
+}
 
 #endif

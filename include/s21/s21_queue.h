@@ -44,6 +44,6 @@ public:
   const_reference back() const { return container.back(); }
 };
 
-} // namespace s21
+}
 
 #endif

@@ -1,10 +1,9 @@
-#include <__iterator/reverse_iterator.h>
-#include <functional>
-#include <initializer_list>
 #include <iostream>
-#include <memory>
-#include <utility>
 
+#ifndef MAP_H
+#define MAP_H
+
+namespace s21 {
 template <typename Key, typename T> class map {
 public:
   using key_type = Key;
@@ -318,6 +317,38 @@ public:
     return node->data.second;
   }
 
+  void erase(iterator<Key, T> pos) {
+    if (pos == end() || !root)
+      return;
+
+    Node *to_delete = pos.current;
+
+    if (to_delete->left == nullptr) {
+      transplant(to_delete, to_delete->right);
+    } else if (to_delete->right == nullptr) {
+      transplant(to_delete, to_delete->left);
+    }
+    else {
+      Node *successor = to_delete->right;
+      while (successor->left != nullptr) {
+        successor = successor->left;
+      }
+
+      if (successor->parent != to_delete) {
+        transplant(successor, successor->right);
+        successor->right = to_delete->right;
+        successor->right->parent = successor;
+      }
+
+      transplant(to_delete, successor);
+      successor->left = to_delete->left;
+      successor->left->parent = successor;
+    }
+
+    delete to_delete;
+    --count;
+  }
+
   void print() const {
     std::cout << "Map contents (in-order):\n";
     print_in_order(root);
@@ -342,7 +373,10 @@ private:
     if (!node)
       return;
     print_in_order(node->left);
-    std::cout << "[" << node->data.first << "] = " << node->data.second << "\n";
+    std::cout << node->data.first << " = " << node->data.second << "\n";
     print_in_order(node->right);
   }
 };
+}
+
+#endif
